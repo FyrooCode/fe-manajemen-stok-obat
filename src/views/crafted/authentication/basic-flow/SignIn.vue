@@ -9,7 +9,7 @@
           id="kt_login_signin_form"
           @submit="onSubmitLogin"
           :validation-schema="login"
-          :initial-values="{ email: 'admin@demo.com', password: 'demo' }"
+          :initial-values="{ email: 'admin@mail.com', password: 'password' }"
         >
           <!--begin::Heading-->
           <div class="text-center mb-10">
@@ -173,7 +173,7 @@ export default defineComponent({
           },
         }).then(() => {
           // Go to page after successfully login
-          router.push({ name: "dashboard" });
+          router.push({ name: "beranda" });
         });
       } else {
         Swal.fire({

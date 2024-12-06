@@ -1,199 +1,113 @@
 <template>
-  <div class="card card-flush" :class="className">
-    <!--begin::Header-->
+  <div class="card card-flush h-100 d-flex flex-column" :class="className">
+    <!-- Card Header -->
     <div class="card-header pt-5">
-      <!--begin::Title-->
       <div class="card-title d-flex flex-column">
-        <!--begin::Info-->
         <div class="d-flex align-items-center">
-          <!--begin::Currency-->
-          <span class="fs-4 fw-semibold text-gray-500 me-1 align-self-start"
-            >$</span
-          >
-          <!--end::Currency-->
-
-          <!--begin::Amount-->
-          <span class="fs-2hx fw-bold text-gray-900 me-2 lh-1 ls-n2">69,700</span>
-          <!--end::Amount-->
-
-          <!--begin::Badge-->
-          <span class="badge badge-light-success fs-base">
-            <KTIcon icon-name="arrow-up" icon-class="fs-5 text-success ms-n1" />
-            2.2%
-          </span>
-          <!--end::Badge-->
+          <span class="fs-4 fw-semibold text-gray-500 me-1 align-self-start">Total Stock:</span>
+          <span class="fs-2hx fw-bold text-gray-900 me-2 lh-1 ls-n2">{{ totalStock }}</span>
         </div>
-        <!--end::Info-->
-
-        <!--begin::Subtitle-->
-        <span class="text-gray-500 pt-1 fw-semibold fs-6"
-          >Projects Earnings in April</span
-        >
-        <!--end::Subtitle-->
+        <span class="text-gray-500 pt-1 fw-semibold fs-6">Stock by Category</span>
       </div>
-      <!--end::Title-->
     </div>
-    <!--end::Header-->
 
-    <!--begin::Card body-->
-    <div class="card-body pt-2 pb-4 d-flex flex-wrap align-items-center">
-      <!--begin::Chart-->
-      <div class="d-flex flex-center me-5 pt-2">
-        <div
-          id="kt_card_widget_17_chart"
-          :style="{
-            minWidth: `${chartSize}px`,
-            minHeight: `${chartSize}px`,
-          }"
-          :data-kt-size="chartSize"
-          :data-kt-line="11"
-        ></div>
+    <!-- Card Body -->
+    <div class="card-body d-flex justify-content-center align-items-center">
+      <div class="chart-container w-100 h-100 d-flex justify-content-center align-items-center">
+        <apexchart
+          type="donut"
+          :options="chartOptions"
+          :series="series"
+          :width="chartSize"
+          :height="chartSize"
+        ></apexchart>
       </div>
-      <!--end::Chart-->
-
-      <!--begin::Labels-->
-      <div class="d-flex flex-column content-justify-center flex-row-fluid">
-        <!--begin::Label-->
-        <div class="d-flex fw-semibold align-items-center">
-          <!--begin::Bullet-->
-          <div class="bullet w-8px h-3px rounded-2 bg-success me-3"></div>
-          <!--end::Bullet-->
-
-          <!--begin::Label-->
-          <div class="text-gray-500 flex-grow-1 me-4">Leaf CRM</div>
-          <!--end::Label-->
-
-          <!--begin::Stats-->
-          <div class="fw-bolder text-gray-700 text-xxl-end">$7,660</div>
-          <!--end::Stats-->
-        </div>
-        <!--end::Label-->
-
-        <!--begin::Label-->
-        <div class="d-flex fw-semibold align-items-center my-3">
-          <!--begin::Bullet-->
-          <div class="bullet w-8px h-3px rounded-2 bg-primary me-3"></div>
-          <!--end::Bullet-->
-
-          <!--begin::Label-->
-          <div class="text-gray-500 flex-grow-1 me-4">Mivy App</div>
-          <!--end::Label-->
-
-          <!--begin::Stats-->
-          <div class="fw-bolder text-gray-700 text-xxl-end">$2,820</div>
-          <!--end::Stats-->
-        </div>
-        <!--end::Label-->
-
-        <!--begin::Label-->
-        <div class="d-flex fw-semibold align-items-center">
-          <!--begin::Bullet-->
-          <div
-            class="bullet w-8px h-3px rounded-2 me-3"
-            style="background-color: #e4e6ef"
-          ></div>
-          <!--end::Bullet-->
-
-          <!--begin::Label-->
-          <div class="text-gray-500 flex-grow-1 me-4">Others</div>
-          <!--end::Label-->
-
-          <!--begin::Stats-->
-          <div class="fw-bolder text-gray-700 text-xxl-end">$45,257</div>
-          <!--end::Stats-->
-        </div>
-        <!--end::Label-->
-      </div>
-      <!--end::Labels-->
     </div>
-    <!--end::Card body-->
   </div>
 </template>
 
 <script lang="ts">
-import { getAssetPath } from "@/core/helpers/assets";
-import { defineComponent, onMounted } from "vue";
-import { getCSSVariableValue } from "@/assets/ts/_utils";
+import { defineComponent, onMounted, ref, watch } from "vue";
+import VueApexCharts from "vue3-apexcharts";
 
 export default defineComponent({
-  name: "default-dashboard-widget-2",
-  components: {},
+  name: "Widget3",
+  components: {
+    apexchart: VueApexCharts,
+  },
   props: {
     className: { type: String, required: false },
     chartSize: { type: Number, required: true },
+    totalStock: { type: Number, required: true },
+    categories: { type: Array, required: true }, // { name: string, stock: number }[]
   },
-  setup(props, { expose }) {
-    const initChart = () => {
-      expose();
-      var el = document.getElementById("kt_card_widget_17_chart");
-
-      if (!el) {
-        return;
+  setup(props) {
+    const colors = ref<string[]>([]);
+    const series = ref<number[]>([]);
+    const chartOptions = ref({
+      chart: { type: "donut" },
+      labels: [],
+      legend: { fontSize: "14px", position: "bottom" },
+      dataLabels: { style: { fontSize: "14px" } },
+      noData: {
+        text: 'No Data Available',
+        align: 'center',
+        verticalAlign: 'middle',
+        offsetX: 0,
+        offsetY: 0,
+        style: {
+          color: '#888',
+          fontSize: '14px',
+          fontFamily: undefined
+        }
       }
+    });
 
-      var options = {
-        size: el.getAttribute("data-kt-size")
-          ? parseInt(el.getAttribute("data-kt-size") as string)
-          : 70,
-        lineWidth: el.getAttribute("data-kt-line")
-          ? parseInt(el.getAttribute("data-kt-line") as string)
-          : 11,
-        rotate: el.getAttribute("data-kt-rotate")
-          ? parseInt(el.getAttribute("data-kt-rotate") as string)
-          : 145,
-        //percent:  el.getAttribute('data-kt-percent') ,
+    const generateColors = (count: number) => {
+      return Array.from({ length: count }, (_, i) => {
+        const hue = (i * 360) / count;
+        return `hsl(${hue}, 70%, 50%)`;
+      });
+    };
+
+    const updateChartOptions = () => {
+      chartOptions.value = {
+        ...chartOptions.value,
+        labels: props.categories.map((category) => category.name),
       };
+    };
 
-      var canvas = document.createElement("canvas");
-      var span = document.createElement("span");
-
-      var ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-      canvas.width = canvas.height = options.size;
-
-      el.appendChild(span);
-      el.appendChild(canvas);
-
-      ctx.translate(options.size / 2, options.size / 2); // change center
-      ctx.rotate((-1 / 2 + options.rotate / 180) * Math.PI); // rotate -90 deg
-
-      //imd = ctx.getImageData(0, 0, 240, 240);
-      var radius = (options.size - options.lineWidth) / 2;
-
-      var drawCircle = function (
-        color: string,
-        lineWidth: number,
-        percent: number
-      ) {
-        percent = Math.min(Math.max(0, percent || 1), 1);
-        ctx.beginPath();
-        ctx.arc(0, 0, radius, 0, Math.PI * 2 * percent, false);
-        ctx.strokeStyle = color;
-        ctx.lineCap = "round"; // butt, round or square
-        ctx.lineWidth = lineWidth;
-        ctx.stroke();
-      };
-
-      // Init
-      drawCircle("#E4E6EF", options.lineWidth, 100 / 100);
-      drawCircle(
-        getCSSVariableValue("--bs-primary"),
-        options.lineWidth,
-        100 / 150
-      );
-      drawCircle(
-        getCSSVariableValue("--bs-success"),
-        options.lineWidth,
-        100 / 250
-      );
+    const updateSeries = () => {
+      if (props.totalStock === 0) {
+        series.value = [];
+      } else {
+        series.value = props.categories.map((category) => category.stock);
+      }
     };
 
     onMounted(() => {
-      initChart();
+      if (props.categories && props.categories.length > 0) {
+        colors.value = generateColors(props.categories.length);
+        updateSeries();
+        updateChartOptions();
+      }
     });
 
-    return {
-      getAssetPath,
-    };
+    watch(() => props.categories, (newCategories) => {
+      if (newCategories && newCategories.length > 0) {
+        colors.value = generateColors(newCategories.length);
+        updateSeries();
+        updateChartOptions();
+      } else {
+        series.value = [];
+      }
+    });
+
+    watch(() => props.totalStock, (newTotalStock) => {
+      updateSeries();
+    });
+
+    return { colors, series, chartOptions };
   },
 });
 </script>

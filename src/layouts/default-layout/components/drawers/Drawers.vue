@@ -1,8 +1,8 @@
 <template>
-  <KTMessengerDrawer />
+  <!-- <KTMessengerDrawer />
   <KTActivityDrawer />
   <KTToolButtons />
-  <KTHelpDrawer />
+  <KTHelpDrawer /> -->
 </template>
 
 <script lang="ts">

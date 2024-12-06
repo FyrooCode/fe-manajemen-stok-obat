@@ -30,7 +30,7 @@
   <KTDrawers />
   <KTScrollTop />
   <KTModals />
-  <KTCustomize />
+  <!-- <KTCustomize /> -->
 </template>
 
 <script lang="ts">

@@ -5,16 +5,26 @@ import {
 } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useConfigStore } from "@/stores/config";
+import JwtService from '@/core/services/JwtService';
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    redirect: "/dashboard",
+    redirect: "/beranda",
     component: () => import("@/layouts/default-layout/DefaultLayout.vue"),
     meta: {
       middleware: "auth",
     },
     children: [
+      {
+        path: "/beranda",
+        name: "beranda",
+        component: () => import("@/views/Beranda.vue"),
+        meta: {
+          pageTitle: "Beranda",
+          breadcrumbs: ["Beranda"],
+        },
+      },
       {
         path: "/dashboard",
         name: "dashboard",
@@ -22,6 +32,15 @@ const routes: Array<RouteRecordRaw> = [
         meta: {
           pageTitle: "Dashboard",
           breadcrumbs: ["Dashboards"],
+        },
+      },
+      {
+        path: "/master-data-obat",
+        name: "master-data-obat",
+        component: () => import("@/views/MasterDataObat.vue"),
+        meta: {
+          pageTitle: "Master Data Obat",
+          breadcrumbs: ["Master Data Obat"],
         },
       },
       {
@@ -490,29 +509,126 @@ const router = createRouter({
   },
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
   const configStore = useConfigStore();
 
-  // current page view title
+  // Set the current page's title
   document.title = `${to.meta.pageTitle} - ${import.meta.env.VITE_APP_NAME}`;
 
-  // reset config to initial state
+  // Reset layout configuration
   configStore.resetLayoutConfig();
 
-  // verify auth token before each page change
-  authStore.verifyAuth();
+  // Check if the route requires authentication
+  if (to.meta.middleware === "auth") {
+    const token = JwtService.getToken();
+    if (token && JwtService.isTokenExpired(token)) {
+      console.log("Token is expired. Redirecting to sign-in...");
+      authStore.purgeAuth();
+      return next({ name: "sign-in" });
+    }
 
-  // before page access check if page requires authentication
-  if (to.meta.middleware == "auth") {
-    if (authStore.isAuthenticated) {
+    const isAuthenticated = await authStore.verifyAuth(); // Async verification
+
+    if (isAuthenticated) {
+      // If authenticated, proceed to the next route
       next();
     } else {
+      // If not authenticated, redirect to the login page
       next({ name: "sign-in" });
     }
   } else {
+    // For routes that do not require authentication, proceed normally
     next();
   }
 });
+
+// router.beforeEach(async (to, from, next) => {
+//   const authStore = useAuthStore();
+//   const configStore = useConfigStore();
+
+//   // Set the current page's title
+//   document.title = `${to.meta.pageTitle} - ${import.meta.env.VITE_APP_NAME}`;
+
+//   // Reset layout configuration
+//   configStore.resetLayoutConfig();
+
+//   // Check if the route requires authentication
+//   if (to.meta.middleware === "auth") {
+//     const token = JwtService.getToken();
+//     if (token && JwtService.isTokenExpired(token)) {
+//       console.log("Token is expired. Attempting to refresh...");
+//       const refreshSuccess = await authStore.refreshToken();
+//       if (!refreshSuccess) {
+//         // If refresh token fails, redirect to the login page
+//         return next({ name: "sign-in" });
+//       }
+//     }
+
+//     const isAuthenticated = await authStore.verifyAuth(); // Async verification
+
+//     if (isAuthenticated) {
+//       // If authenticated, proceed to the next route
+//       next();
+//     } else {
+//       // If not authenticated, redirect to the login page
+//       next({ name: "sign-in" });
+//     }
+//   } else {
+//     // For routes that do not require authentication, proceed normally
+//     next();
+//   }
+// });
+
+
+// export function setupRouterGuards(router: Router) {
+//   router.beforeEach(async (to, from, next) => {
+//     const authStore = useAuthStore();
+//     const configStore = useConfigStore();
+
+//     // Set the current page's title
+//     document.title = `${to.meta.pageTitle} - ${import.meta.env.VITE_APP_NAME}`;
+
+//     // Reset layout configuration
+//     configStore.resetLayoutConfig();
+
+//     try {
+//       // Check if the route requires authentication
+//       if (to.meta.middleware === "auth") {
+//         const token = JwtService.getToken();
+
+//         if (!token) {
+//           console.log("No token found. Redirecting to sign-in.");
+//           return next({ name: "sign-in" });
+//         }
+
+//         if (JwtService.isTokenExpired(token)) {
+//           console.log("Token is expired. Attempting to refresh...");
+//           const refreshSuccess = await authStore.refreshToken();
+
+//           if (!refreshSuccess) {
+//             console.warn("Token refresh failed. Redirecting to sign-in.");
+//             return next({ name: "sign-in" });
+//           }
+//         }
+
+//         const isAuthenticated = await authStore.verifyAuth();
+
+//         if (isAuthenticated) {
+//           next(); // Proceed to the route
+//         } else {
+//           console.warn("User not authenticated. Redirecting to sign-in.");
+//           next({ name: "sign-in" });
+//         }
+//       } else {
+//         // For routes without authentication middleware, proceed normally
+//         next();
+//       }
+//     } catch (error) {
+//       console.error("Error during route guard execution:", error);
+//       next({ name: "sign-in" });
+//     }
+//   });
+// }
 
 export default router;

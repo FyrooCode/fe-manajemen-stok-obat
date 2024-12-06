@@ -2,7 +2,7 @@
   <!--begin::Logo-->
   <div class="app-sidebar-logo px-6" id="kt_app_sidebar_logo">
     <!--begin::Logo image-->
-    <router-link to="/">
+    <!-- <router-link to="/">
       <img
         v-if="
           layout === 'dark-sidebar' ||
@@ -23,7 +23,7 @@
         :src="getAssetPath('media/logos/default-small.svg')"
         class="h-20px app-sidebar-logo-minimize"
       />
-    </router-link>
+    </router-link> -->
     <!--end::Logo image-->
     <!--begin::Sidebar toggle-->
     <div
